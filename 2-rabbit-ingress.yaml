@@ -1,0 +1,18 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: rabbitmq-sit
+  namespace: sit
+  annotations:
+    networking.gke.io/managed-certificates: cert-rabbitmq-sit-app
+    kubernetes.io/ingress.global-static-ip-name: rabbitmq-sit
+    kubernetes.io/ingress.allow-http: "false" # disable HTTP
+spec:
+  rules:
+    - host: rabbitmq-sit.nano-dev.com
+      http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: rabbitmq-sit
+              servicePort: 15672

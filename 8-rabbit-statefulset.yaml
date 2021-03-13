@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rabbitmq-sit
+  namespace: sit
+  labels:
+    app: rabbitmq-sit
+spec:
+  serviceName: rabbitmq-sit
+  updateStrategy:
+    type: RollingUpdate
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq-sit
+  template:
+    metadata:
+      labels:
+        app: rabbitmq-sit
+    spec:
+      serviceAccountName: rabbitmq-sit
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: rabbitmq-sit
+        image: rabbitmq:3.8.6-management
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 15672
+          name: http
+          protocol: TCP
+        - containerPort: 5672
+          name: amqp
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 1.8
+            memory: 3584Mi
+          requests:
+            cpu: 300m
+            memory: 512Mi
+        envFrom:
+        - configMapRef:
+            name: rabbitmq-sit-config
+        env:
+        - name: RABBITMQ_DEFAULT_USER
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-sit-secret
+              key: RABBITMQ_DEFAULT_USER
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-sit-secret
+              key: RABBITMQ_DEFAULT_PASS
+        - name: RABBITMQ_ERLANG_COOKIE
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-sit-secret
+              key: RABBITMQ_ERLANG_COOKIE
+        - name: RABBIT_HOSTNAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: RABBIT_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: RABBITMQ_USE_LONGNAME
+          value: "true"
+        - name: RABBITMQ_NODENAME
+          value: rabbit@$(RABBIT_HOSTNAME).rabbitmq.$(RABBIT_NAMESPACE).svc.cluster.local
+        - name: K8S_SERVICE_NAME
+          value: "rabbitmq-sit"
+        - name: K8S_HOSTNAME_SUFFIX
+          value: .rabbitmq.$(RABBIT_NAMESPACE).svc.cluster.local
+        # livenessProbe:
+        #   exec:
+        #     command: ["rabbitmq-diagnostics", "status", "--erlang-cookie", "$(RABBITMQ_ERLANG_COOKIE)"]
+        #   initialDelaySeconds: 10
+        #   periodSeconds: 30
+        #   timeoutSeconds: 15
+        # readinessProbe:
+        #   exec:
+        #     command: ["rabbitmq-diagnostics", "status", "--erlang-cookie", "$(RABBITMQ_ERLANG_COOKIE)"]
+        #   initialDelaySeconds: 10
+        #   periodSeconds: 30
+        #   timeoutSeconds: 15
+        volumeMounts:
+        - mountPath: /var/lib/rabbitmq
+          name: data
+          readOnly: false
+        - mountPath: /etc/rabbitmq
+          name: config-volume
+      volumes:
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: rabbitmq.conf
+            path: rabbitmq.conf
+          - key: enabled_plugins
+            path: enabled_plugins
+          name: rabbitmq-sit-config
+        name: config-volume
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: "standard"
+      resources:
+        requests:
+          storage: 10Gi

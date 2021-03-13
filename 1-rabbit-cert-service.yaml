@@ -1,0 +1,8 @@
+apiVersion: networking.gke.io/v1beta2
+kind: ManagedCertificate
+metadata:
+  name: cert-rabbitmq-sit-app
+  namespace: sit
+spec:
+  domains:
+    - rabbitmq-sit.nano-dev.com
