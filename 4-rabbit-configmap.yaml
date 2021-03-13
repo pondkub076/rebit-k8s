@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-sit-config
+  namespace: sit
+data:
+  RABBITMQ_DEFAULT_USER: YWRtaW4=
+  RABBITMQ_DEFAULT_PASS: YWRtaW4=
+  RABBITMQ_DEFAULT_VHOST: /
+  ADDERSERVICE_SERVICE_HOST: 0.0.0.0
+  RABBITMQ_NODENAME: rabbitmq-sit

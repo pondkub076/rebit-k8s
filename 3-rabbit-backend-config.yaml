@@ -7,3 +7,6 @@ spec:
   timeoutSec: 240
   connectionDraining:
     drainingTimeoutSec: 60
+  healthCheck:
+    type: HTTP  
+    requestPath: /

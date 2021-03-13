@@ -1,22 +1,23 @@
-kind: Service
 apiVersion: v1
+kind: Service
 metadata:
   name: rabbitmq-sit
   namespace: sit
+  labels:
+    run: rabbitmq-sit
   annotations:
     cloud.google.com/neg: '{"ingress": true}'
     cloud.google.com/backend-config: '{"ports": {"15672":"rabbitmq-sit"}}'
     cloud.google.com/app-protocols: '{"rabbitmq-sit":"HTTPS"}'
 spec:
-  type: NodePort
+  ports:
+    - name: "http"
+      port: 15672
+      targetPort: 15672
+      protocol: TCP
+    - name: "amqp"
+      port: 5672
+      targetPort: 5672
   selector:
     app: rabbitmq-sit
-  ports:
-   - name: rabbitmq-mgmt-port
-     protocol: TCP
-     port: 15672
-     targetPort: 15672
-   - name: rabbitmq-amqp-port
-     protocol: TCP
-     port: 5672
-     targetPort: 5672
+  type: NodePort
